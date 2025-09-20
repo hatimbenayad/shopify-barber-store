@@ -5,7 +5,6 @@
   "installCommand": "npm install",
   "framework": "remix",
   "outputDirectory": "build",
-  "serverlessFunctionRegion": "auto",
   "functions": {
     "build/index.js": {
       "maxDuration": 30
