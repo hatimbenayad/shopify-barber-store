@@ -1,0 +1,130 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["jsonProtocol"]
+}
+
+// Note that some adapters may set a maximum length for the String type by default, please ensure your strings are long
+// enough when changing adapters.
+// See https://www.prisma.io/docs/orm/reference/prisma-schema-reference#string for more information
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Session {
+  id          String    @id
+  shop        String
+  state       String
+  isOnline    Boolean   @default(false)
+  scope       String?
+  expires     DateTime?
+  accessToken String
+  userId      BigInt?
+  firstName   String?
+  lastName    String?
+  email       String?
+  accountOwner Boolean  @default(false)
+  locale      String?
+  collaborator Boolean? @default(false)
+  emailVerified Boolean? @default(false)
+}
+
+model Shop {
+  id            String   @id @default(cuid())
+  shopDomain    String   @unique
+  shopName      String?
+  email         String?
+  isActive      Boolean  @default(true)
+  subscriptionStatus String @default("trial")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  barbers       Barber[]
+  services      Service[]
+  appointments  Appointment[]
+  inquiries     Inquiry[]
+}
+
+model Barber {
+  id          String   @id @default(cuid())
+  name        String
+  specialty   String?
+  bio         String?
+  imageUrl    String?
+  isActive    Boolean  @default(true)
+  shopId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+  
+  @@index([shopId])
+}
+
+model Service {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  price       String
+  duration    String?
+  isActive    Boolean  @default(true)
+  shopId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+  
+  @@index([shopId])
+}
+
+model Appointment {
+  id              String   @id @default(cuid())
+  customerName    String
+  customerEmail   String
+  customerPhone   String
+  serviceId       String
+  barberId        String?
+  appointmentDate DateTime
+  notes           String?
+  status          String   @default("scheduled") // scheduled, confirmed, completed, cancelled
+  shopId          String
+  customerId      String?  // Shopify customer ID if available
+  orderId         String?  // Shopify order ID if payment is processed
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  shop    Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  service Service  @relation(fields: [serviceId], references: [id])
+  barber  Barber?  @relation(fields: [barberId], references: [id])
+  
+  @@index([shopId])
+  @@index([customerId])
+  @@index([appointmentDate])
+}
+
+model Inquiry {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  message   String
+  status    String   @default("new") // new, replied, closed
+  shopId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  
+  @@index([shopId])
+}

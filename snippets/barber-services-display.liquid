@@ -1,0 +1,138 @@
+{% comment %}
+  Barber Shop Services Display
+  This template shows available services
+{% endcomment %}
+
+<div class="barber-services-section">
+  <div class="services-container">
+    <h2 class="services-title">Our Services</h2>
+    <div id="services-grid" class="services-grid">
+      <!-- Services will be loaded here -->
+    </div>
+  </div>
+</div>
+
+<style>
+.barber-services-section {
+  padding: 3rem 0;
+  background: #fff;
+}
+
+.services-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.services-title {
+  text-align: center;
+  margin-bottom: 3rem;
+  font-size: 2.5rem;
+  color: #333;
+}
+
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.service-card {
+  background: #f9f9f9;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  text-align: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.service-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+.service-name {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.service-description {
+  color: #666;
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+
+.service-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+.service-price {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #007cba;
+}
+
+.service-duration {
+  color: #888;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .services-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .services-title {
+    font-size: 2rem;
+  }
+}
+</style>
+
+<script>
+(function() {
+  const servicesGrid = document.getElementById('services-grid');
+  const shop = '{{ shop.permanent_domain }}';
+  const proxyUrl = `/apps/barber?shop=${shop}`;
+  
+  async function loadServices() {
+    try {
+      const response = await fetch(proxyUrl);
+      const data = await response.json();
+      
+      if (data.error || !data.services) {
+        servicesGrid.innerHTML = '<p>Unable to load services at this time.</p>';
+        return;
+      }
+      
+      if (data.services.length === 0) {
+        servicesGrid.innerHTML = '<p>No services available at this time.</p>';
+        return;
+      }
+      
+      servicesGrid.innerHTML = data.services.map(service => `
+        <div class="service-card">
+          <h3 class="service-name">${service.name}</h3>
+          ${service.description ? `<p class="service-description">${service.description}</p>` : ''}
+          <div class="service-details">
+            <span class="service-price">${service.price}</span>
+            ${service.duration ? `<span class="service-duration">${service.duration}</span>` : ''}
+          </div>
+        </div>
+      `).join('');
+      
+    } catch (error) {
+      console.error('Error loading services:', error);
+      servicesGrid.innerHTML = '<p>Unable to load services at this time.</p>';
+    }
+  }
+  
+  loadServices();
+})();
+</script>

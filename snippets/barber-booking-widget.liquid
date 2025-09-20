@@ -1,0 +1,267 @@
+{% comment %}
+  Barber Shop Booking Widget
+  This template can be included in any page where you want to show the booking form
+  Add this to your theme by creating a new snippet or section
+{% endcomment %}
+
+<div id="barber-booking-widget" class="barber-booking-section">
+  <div class="barber-booking-container">
+    <h2 class="booking-title">Book an Appointment</h2>
+    
+    <form id="barber-booking-form" class="booking-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="customer-name">Full Name *</label>
+          <input type="text" id="customer-name" name="customerName" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="customer-email">Email *</label>
+          <input type="email" id="customer-email" name="customerEmail" required>
+        </div>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="customer-phone">Phone Number *</label>
+          <input type="tel" id="customer-phone" name="customerPhone" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="service-select">Service *</label>
+          <select id="service-select" name="serviceId" required>
+            <option value="">Select a service</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="barber-select">Preferred Barber</label>
+          <select id="barber-select" name="barberId">
+            <option value="">Any available barber</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="appointment-date">Preferred Date & Time *</label>
+          <input type="datetime-local" id="appointment-date" name="appointmentDate" required>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="notes">Additional Notes</label>
+        <textarea id="notes" name="notes" rows="3" placeholder="Any special requests or notes..."></textarea>
+      </div>
+      
+      <button type="submit" class="booking-submit-btn">Book Appointment</button>
+    </form>
+    
+    <div id="booking-message" class="booking-message" style="display: none;"></div>
+  </div>
+</div>
+
+<style>
+.barber-booking-section {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.booking-title {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #333;
+  font-size: 2rem;
+}
+
+.booking-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #555;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #007cba;
+  box-shadow: 0 0 0 2px rgba(0, 124, 186, 0.2);
+}
+
+.booking-submit-btn {
+  background: #007cba;
+  color: white;
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.booking-submit-btn:hover {
+  background: #005a87;
+}
+
+.booking-submit-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.booking-message {
+  padding: 1rem;
+  border-radius: 4px;
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.booking-message.success {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.booking-message.error {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+@media (max-width: 768px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .barber-booking-section {
+    margin: 1rem;
+    padding: 1rem;
+  }
+}
+</style>
+
+<script>
+(function() {
+  const form = document.getElementById('barber-booking-form');
+  const serviceSelect = document.getElementById('service-select');
+  const barberSelect = document.getElementById('barber-select');
+  const messageDiv = document.getElementById('booking-message');
+  const submitBtn = form.querySelector('.booking-submit-btn');
+  
+  // Shop domain from Liquid
+  const shop = '{{ shop.permanent_domain }}';
+  const proxyUrl = `/apps/barber?shop=${shop}`;
+  
+  // Load services and barbers
+  async function loadData() {
+    try {
+      const response = await fetch(proxyUrl);
+      const data = await response.json();
+      
+      if (data.error) {
+        showMessage('Failed to load booking data. Please refresh the page.', 'error');
+        return;
+      }
+      
+      // Populate services
+      data.services.forEach(service => {
+        const option = document.createElement('option');
+        option.value = service.id;
+        option.textContent = `${service.name} - ${service.price}`;
+        serviceSelect.appendChild(option);
+      });
+      
+      // Populate barbers
+      data.barbers.forEach(barber => {
+        const option = document.createElement('option');
+        option.value = barber.id;
+        option.textContent = barber.name;
+        barberSelect.appendChild(option);
+      });
+      
+    } catch (error) {
+      console.error('Error loading data:', error);
+      showMessage('Failed to load booking data. Please refresh the page.', 'error');
+    }
+  }
+  
+  // Handle form submission
+  form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Booking...';
+    
+    const formData = new FormData(form);
+    
+    try {
+      const response = await fetch(proxyUrl, {
+        method: 'POST',
+        body: formData
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        showMessage('Appointment booked successfully! We will contact you soon to confirm.', 'success');
+        form.reset();
+      } else {
+        showMessage(result.details || result.error || 'Failed to book appointment. Please try again.', 'error');
+      }
+      
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      showMessage('Failed to submit booking. Please try again.', 'error');
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Book Appointment';
+    }
+  });
+  
+  function showMessage(message, type) {
+    messageDiv.textContent = message;
+    messageDiv.className = `booking-message ${type}`;
+    messageDiv.style.display = 'block';
+    
+    // Auto-hide success messages after 5 seconds
+    if (type === 'success') {
+      setTimeout(() => {
+        messageDiv.style.display = 'none';
+      }, 5000);
+    }
+  }
+  
+  // Load data when page loads
+  loadData();
+})();
+</script>
