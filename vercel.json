@@ -4,10 +4,5 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": "remix",
-  "outputDirectory": "build",
-  "functions": {
-    "build/index.js": {
-      "maxDuration": 30
-    }
-  }
+  "outputDirectory": "build"
 }
